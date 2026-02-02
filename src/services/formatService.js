@@ -63,24 +63,30 @@ export function formatForForm(extractedData, validationResults, scores) {
  * Format individual values based on field type
  */
 function formatValue(fieldName, value, validation) {
+  // Convert to string if needed for string operations
+  const valueStr = typeof value === 'string' ? value : String(value);
+  
   switch (fieldName) {
     case 'total_amount':
       // Convert to numeric, remove formatting
-      return validation.numericValue || parseFloat(value.replace(/[,$\s]/g, ''));
+      if (typeof value === 'number') {
+        return value;
+      }
+      return validation.numericValue || parseFloat(valueStr.replace(/[,$\s]/g, ''));
       
     case 'transaction_date':
     case 'payment_due_date':
       // Keep date in YYYY-MM-DD format
-      return value;
+      return valueStr;
       
     case 'vendor_name':
     case 'customer_name':
-      // Trim whitespace, title case
-      return value.trim();
+      // Trim whitespace
+      return valueStr.trim();
       
     case 'reference_number':
       // Remove extra whitespace
-      return value.trim().replace(/\s+/g, ' ');
+      return valueStr.trim().replace(/\s+/g, ' ');
       
     default:
       return value;
