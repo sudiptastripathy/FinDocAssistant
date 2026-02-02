@@ -103,8 +103,14 @@ export async function processDocument(imageBase64, onProgress) {
     
     console.log('🔄 Orchestrator: Starting validation...');
     reportProgress(onProgress, 'validating', 'Validating data...');
-    state.validated = validateDocumentData(state.extracted);
-    console.log('🔄 Orchestrator: Validation complete', state.validated);
+    
+    try {
+      state.validated = validateDocumentData(state.extracted);
+      console.log('🔄 Orchestrator: Validation complete', state.validated);
+    } catch (validationError) {
+      console.error('❌ Orchestrator: Validation failed!', validationError);
+      throw new Error(`Validation error: ${validationError.message}`);
+    }
     
     const validationSummary = getValidationSummary(state.validated);
     if (!validationSummary.allValid) {
