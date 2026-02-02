@@ -36,39 +36,39 @@ function calculateCost(inputTokens, outputTokens, model) {
   return inputCost + outputCost;
 }
 
-export default async function handler(event, context) {
+export default async function handler(request, context) {
   // Only allow POST requests
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
+  if (request.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 
   // Check daily cost limit
   checkAndResetDailyLimit();
   
   if (dailyCostTracker.totalCost >= DAILY_COST_LIMIT) {
-    return {
-      statusCode: 429,
-      body: JSON.stringify({
+    return new Response(
+      JSON.stringify({
         error: 'Daily API cost limit reached',
         message: `Daily limit of $${DAILY_COST_LIMIT} has been reached. Please try again tomorrow.`,
         errorType: 'rate_limit_error',
         dailyLimit: DAILY_COST_LIMIT,
         currentUsage: dailyCostTracker.totalCost
-      })
-    };
+      }),
+      { status: 429, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 
   try {
-    const { imageBase64 } = JSON.parse(event.body);
+    const { imageBase64 } = await request.json();
 
     if (!imageBase64) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Missing imageBase64 in request body' })
-      };
+      return new Response(
+        JSON.stringify({ error: 'Missing imageBase64 in request body' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     // Initialize Anthropic client with API key from environment variable
@@ -196,9 +196,8 @@ Return ONLY valid JSON with this structure:
     const extractedText = message.content[0].text;
     const extractedData = JSON.parse(extractedText);
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
+    return new Response(
+      JSON.stringify({
         success: true,
         data: extractedData,
         usage: {
@@ -209,39 +208,40 @@ Return ONLY valid JSON with this structure:
           dailyLimit: DAILY_COST_LIMIT,
           remainingBudget: Math.max(0, DAILY_COST_LIMIT - dailyCostTracker.totalCost)
         }
-      })
-    };
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
     console.error('Error in claude-extract function:', error);
 
     // Handle specific Anthropic API errors
     if (error.status === 401) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({
+      return new Response(
+        JSON.stringify({
           error: 'API authentication failed',
           errorType: 'authentication_error'
-        })
-      };
+        }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     if (error.status === 429) {
-      return {
-        statusCode: 429,
-        body: JSON.stringify({
+      return new Response(
+        JSON.stringify({
           error: 'API rate limit exceeded',
           errorType: 'rate_limit_error'
-        })
-      };
+        }),
+        { status: 429, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
+    return new Response(
+      JSON.stringify({
         error: error.message || 'Internal server error',
         errorType: 'server_error'
-      })
-    };
+      }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 }
