@@ -192,9 +192,18 @@ Return ONLY valid JSON with this structure:
     // Update daily cost tracker
     dailyCostTracker.totalCost += cost;
 
-    // Parse the extracted data
+    // Parse the extracted data from Claude's response
     const extractedText = message.content[0].text;
-    const extractedData = JSON.parse(extractedText);
+    
+    // Remove markdown code blocks if present
+    let cleanedText = extractedText.trim();
+    if (cleanedText.startsWith('```json')) {
+      cleanedText = cleanedText.replace(/^```json\s*/i, '').replace(/\s*```$/, '');
+    } else if (cleanedText.startsWith('```')) {
+      cleanedText = cleanedText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+    
+    const extractedData = JSON.parse(cleanedText);
 
     return new Response(
       JSON.stringify({

@@ -112,8 +112,18 @@ Return ONLY valid JSON with this structure:
 
     dailyCostTracker.totalCost += cost;
 
+    // Parse the score data from Claude's response
     const scoreText = message.content[0].text;
-    const scoreData = JSON.parse(scoreText);
+    
+    // Remove markdown code blocks if present
+    let cleanedText = scoreText.trim();
+    if (cleanedText.startsWith('```json')) {
+      cleanedText = cleanedText.replace(/^```json\s*/i, '').replace(/\s*```$/, '');
+    } else if (cleanedText.startsWith('```')) {
+      cleanedText = cleanedText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+    
+    const scoreData = JSON.parse(cleanedText);
 
     return new Response(
       JSON.stringify({
