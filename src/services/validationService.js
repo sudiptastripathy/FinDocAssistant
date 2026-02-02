@@ -287,7 +287,10 @@ function validateCurrency(currency) {
 }
 
 /**
- * Validate custome) {
+ * Validate customer name (optional field)
+ */
+function validateCustomerName(customerName) {
+  if (!customerName) {
     return {
       value: customerName,
       valid: true,
@@ -307,10 +310,7 @@ function validateCurrency(currency) {
   }
   
   return {
-    value: nameStr
-  
-  return {
-    value: customerName,
+    value: nameStr,
     valid: true
   };
 }
