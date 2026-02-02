@@ -42,6 +42,7 @@ export async function processDocument(imageBase64, onProgress) {
     logger.info('Starting document extraction', { hasImage: !!imageBase64 });
     
     const extractResult = await extractDocumentData(imageBase64);
+    console.log('🔄 Orchestrator: Extract result received', extractResult);
     
     if (!extractResult.success) {
       const friendlyError = getUserFriendlyError(
@@ -68,9 +69,13 @@ export async function processDocument(imageBase64, onProgress) {
     
     // Map extraction agent field names to UI field names
     const mappedData = mapExtractedFields(extractResult.data);
+    console.log('🔄 Orchestrator: Mapped data', mappedData);
+    
     state.extracted = mappedData;
     state.costs.breakdown.extract = extractResult.cost;
     state.costs.total += extractResult.cost.total_cost;
+    
+    console.log('🔄 Orchestrator: Checking document type:', state.extracted.document_type);
     
     // Accept all financial document types (invoice, receipt, bill, statement, etc.)
     const validDocTypes = ['invoice', 'receipt', 'bill', 'statement', 'order_confirmation'];
@@ -96,8 +101,10 @@ export async function processDocument(imageBase64, onProgress) {
     
     reportProgress(onProgress, 'extracted', 'Extraction complete', state);
     
+    console.log('🔄 Orchestrator: Starting validation...');
     reportProgress(onProgress, 'validating', 'Validating data...');
     state.validated = validateDocumentData(state.extracted);
+    console.log('🔄 Orchestrator: Validation complete', state.validated);
     
     const validationSummary = getValidationSummary(state.validated);
     if (!validationSummary.allValid) {
